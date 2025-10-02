@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Training Timer</title>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiVHJhaW5pbmcgVGltZXIiLCJzaG9ydF9uYW1lIjoiVGltZXIiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMWExYTJlIiwidGhlbWVfY29sb3IiOiIjMWExYTJlIiwib3JpZW50YXRpb24iOiJwb3J0cmFpdCJ9">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .view {
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .view.active {
+            display: block;
+        }
+        
+        /* Timer View */
+        .timer-display {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .timer-main {
+            font-size: 5rem;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin: 20px 0;
+        }
+        
+        .timer-phase {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #ffd700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .timer-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            border-color: #c0392b;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            border-color: #229954;
+        }
+        
+        /* Workouts List */
+        .workouts-list {
+            margin-bottom: 20px;
+        }
+        
+        .workout-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .workout-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .workout-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .workout-details {
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .segment-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .segment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .segment-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .pulsing {
+            animation: pulse 1s infinite;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ffed4e);
+            transition: width 0.1s linear;
+            border-radius: 10px;
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 480px) {
+            .timer-main {
+                font-size: 4rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .timer-phase {
+                font-size: 1.5rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Sound Toggle */
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            z-index: 1000;
+        }
+        
+        .sound-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="sound-toggle" id="soundToggle">🔊</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>⏱️ Training Timer</h1>
+        </div>
+        
+        <!-- Main Menu View -->
+        <div id="menuView" class="view active">
+            <div class="workouts-list" id="workoutsList"></div>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="showCreateView()">Create New Workout</button>
+            </div>
+        </div>
+        
+        <!-- Create/Edit Workout View -->
+        <div id="createView" class="view">
+            <div class="form-group">
+                <label>Workout Name</label>
+                <input type="text" id="workoutName" placeholder="Enter workout name">
+            </div>
+            
+            <div id="segmentsContainer"></div>
+            
+            <div class="controls">
+                <button class="btn" onclick="addSegment()">Add Segment</button>
+                <button class="btn btn-success" onclick="saveWorkout()">Save Workout</button>
+                <button class="btn" onclick="showMenuView()">Cancel</button>
+            </div>
+        </div>
+        
+        <!-- Timer View -->
+        <div id="timerView" class="view">
+            <div class="timer-display">
+                <div class="timer-phase" id="timerPhase">Get Ready!</div>
+                <div class="timer-main" id="timerMain">00:00</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="timer-info">
+                    <div class="info-box">
+                        <div class="info-label">Segment</div>
+                        <div class="info-value" id="currentSegment">1/1</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Series</div>
+                        <div class="info-value" id="currentSeries">1/1</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Repetition</div>
+                        <div class="info-value" id="currentRep">1/1</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Total Time</div>
+                        <div class="info-value" id="totalTime">00:00</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Start</button>
+                <button class="btn" onclick="resetTimer()">Reset</button>
+                <button class="btn btn-danger" onclick="showMenuView()">Exit</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // State Management
+        let state = {
+            workouts: [],
+            currentWorkout: null,
+            timer: {
+                running: false,
+                currentTime: 0,
+                totalElapsed: 0,
+                segment: 0,
+                series: 0,
+                rep: 0,
+                phase: 'work', // 'work', 'rest', 'seriesBreak', 'segmentBreak'
+                interval: null
+            },
+            soundEnabled: true
+        };
+        
+        // Audio Context for beeps
+        let audioCtx = null;
+        
+        // Initialize
+        function init() {
+            loadWorkouts();
+            renderWorkoutsList();
+            
+            // Initialize audio context on first user interaction
+            document.addEventListener('click', function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                document.removeEventListener('click', initAudio);
+            }, { once: true });
+        }
+        
+        // Sound Functions
+        function playBeep(frequency = 800, duration = 100) {
+            if (!state.soundEnabled || !audioCtx) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration / 1000);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + duration / 1000);
+        }
+        
+        function playCountdown() {
+            playBeep(1200, 150);
+        }
+        
+        function playPhaseChange() {
+            playBeep(600, 200);
+            setTimeout(() => playBeep(800, 200), 250);
+        }
+        
+        function playComplete() {
+            playBeep(800, 150);
+            setTimeout(() => playBeep(1000, 150), 200);
+            setTimeout(() => playBeep(1200, 300), 400);
+        }
+        
+        document.getElementById('soundToggle').addEventListener('click', function() {
+            state.soundEnabled = !state.soundEnabled;
+            this.textContent = state.soundEnabled ? '🔊' : '🔇';
+        });
+        
+        // Default Workouts
+        const defaultWorkouts = [
+            {
+                id: Date.now(),
+                name: "HIIT Basic",
+                segments: [
+                    {
+                        series: 5,
+                        reps: 6,
+                        workTime: 40,
+                        restTime: 20,
+                        seriesBreak: 60,
+                        segmentBreak: 120
+                    }
+                ]
+            },
+            {
+                id: Date.now() + 1,
+                name: "Tabata Classic",
+                segments: [
+                    {
+                        series: 8,
+                        reps: 1,
+                        workTime: 20,
+                        restTime: 10,
+                        seriesBreak: 60,
+                        segmentBreak: 0
+                    }
+                ]
+            },
+            {
+                id: Date.now() + 2,
+                name: "Strength Builder",
+                segments: [
+                    {
+                        series: 3,
+                        reps: 4,
+                        workTime: 45,
+                        restTime: 15,
+                        seriesBreak: 90,
+                        segmentBreak: 180
+                    },
+                    {
+                        series: 3,
+                        reps: 4,
+                        workTime: 30,
+                        restTime: 30,
+                        seriesBreak: 90,
+                        segmentBreak: 0
+                    }
+                ]
+            },
+            {
+                id: Date.now() + 3,
+                name: "Quick Cardio",
+                segments: [
+                    {
+                        series: 4,
+                        reps: 3,
+                        workTime: 30,
+                        restTime: 15,
+                        seriesBreak: 45,
+                        segmentBreak: 0
+                    }
+                ]
+            }
+        ];
+        
+        // Storage Functions
+        function loadWorkouts() {
+            const stored = localStorage.getItem('workouts');
+            if (stored) {
+                state.workouts = JSON.parse(stored);
+            } else {
+                state.workouts = defaultWorkouts;
+                saveWorkouts();
+            }
+        }
+        
+        function saveWorkouts() {
+            localStorage.setItem('workouts', JSON.stringify(state.workouts));
+        }
+        
+        // View Management
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+        
+        function showMenuView() {
+            showView('menuView');
+            resetTimer();
+            renderWorkoutsList();
+        }
+        
+        function showCreateView() {
+            showView('createView');
+            document.getElementById('workoutName').value = '';
+            document.getElementById('segmentsContainer').innerHTML = '';
+            addSegment();
+        }
+        
+        function showTimerView(workout) {
+            state.currentWorkout = workout;
+            showView('timerView');
+            resetTimer();
+        }
+        
+        // Workout Management
+        function renderWorkoutsList() {
+            const container = document.getElementById('workoutsList');
+            container.innerHTML = '';
+            
+            state.workouts.forEach(workout => {
+                const card = document.createElement('div');
+                card.className = 'workout-card';
+                card.innerHTML = `
+                    <div class="workout-name">${workout.name}</div>
+                    <div class="workout-details">
+                        ${workout.segments.length} segment(s) • 
+                        ${calculateTotalTime(workout)} total
+                    </div>
+                `;
+                card.onclick = () => showTimerView(workout);
+                container.appendChild(card);
+            });
+        }
+        
+        function calculateTotalTime(workout) {
+            let total = 0;
+            workout.segments.forEach((seg, i) => {
+                total += seg.series * seg.reps * (seg.workTime + seg.restTime);
+                total += (seg.series - 1) * seg.seriesBreak;
+                if (i < workout.segments.length - 1) {
+                    total += seg.segmentBreak;
+                }
+            });
+            return formatTime(total);
+        }
+        
+        function addSegment() {
+            const container = document.getElementById('segmentsContainer');
+            const segmentIndex = container.children.length;
+            
+            const segment = document.createElement('div');
+            segment.className = 'segment-container';
+            segment.innerHTML = `
+                <div class="segment-header">
+                    <span class="segment-title">Segment ${segmentIndex + 1}</span>
+                    ${segmentIndex > 0 ? '<button class="btn btn-small btn-danger" onclick="removeSegment(this)">Remove</button>' : ''}
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Series</label>
+                        <input type="number" class="segment-series" value="3" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Repetitions</label>
+                        <input type="number" class="segment-reps" value="5" min="1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Work Time (sec)</label>
+                        <input type="number" class="segment-work" value="30" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Rest Time (sec)</label>
+                        <input type="number" class="segment-rest" value="15" min="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Series Break (sec)</label>
+                        <input type="number" class="segment-series-break" value="60" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Segment Break (sec)</label>
+                        <input type="number" class="segment-break" value="120" min="0">
+                    </div>
+                </div>
+            `;
+            container.appendChild(segment);
+        }
+        
+        function removeSegment(btn) {
+            btn.closest('.segment-container').remove();
+            updateSegmentNumbers();
+        }
+        
+        function updateSegmentNumbers() {
+            document.querySelectorAll('.segment-title').forEach((title, i) => {
+                title.textContent = `Segment ${i + 1}`;
+            });
+        }
+        
+        function saveWorkout() {
+            const name = document.getElementById('workoutName').value.trim();
+            if (!name) {
+                alert('Please enter a workout name');
+                return;
+            }
+            
+            const segments = [];
+            document.querySelectorAll('.segment-container').forEach(container => {
+                segments.push({
+                    series: parseInt(container.querySelector('.segment-series').value),
+                    reps: parseInt(container.querySelector('.segment-reps').value),
+                    workTime: parseInt(container.querySelector('.segment-work').value),
+                    restTime: parseInt(container.querySelector('.segment-rest').value),
+                    seriesBreak: parseInt(container.querySelector('.segment-series-break').value),
+                    segmentBreak: parseInt(container.querySelector('.segment-break').value)
+                });
+            });
+            
+            const workout = {
+                id: Date.now(),
+                name,
+                segments
+            };
+            
+            state.workouts.push(workout);
+            saveWorkouts();
+            showMenuView();
+        }
+        
+        // Timer Functions
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function updateTimerDisplay() {
+            const t = state.timer;
+            const w = state.currentWorkout;
+            
+            document.getElementById('timerMain').textContent = formatTime(t.currentTime);
+            document.getElementById('currentSegment').textContent = `${t.segment + 1}/${w.segments.length}`;
+            document.getElementById('currentSeries').textContent = `${t.series + 1}/${w.segments[t.segment].series}`;
+            document.getElementById('currentRep').textContent = `${t.rep + 1}/${w.segments[t.segment].reps}`;
+            document.getElementById('totalTime').textContent = formatTime(Math.floor(t.totalElapsed));
+            
+            // Update phase display
+            let phaseText = '';
+            let phaseColor = '#ffd700';
+            
+            switch(t.phase) {
+                case 'work':
+                    phaseText = '💪 WORK!';
+                    phaseColor = '#27ae60';
+                    document.getElementById('timerMain').classList.add('pulsing');
+                    break;
+                case 'rest':
+                    phaseText = '😮‍💨 REST';
+                    phaseColor = '#3498db';
+                    document.getElementById('timerMain').classList.remove('pulsing');
+                    break;
+                case 'seriesBreak':
+                    phaseText = '⏸️ Series Break';
+                    phaseColor = '#e67e22';
+                    document.getElementById('timerMain').classList.remove('pulsing');
+                    break;
+                case 'segmentBreak':
+                    phaseText = '⏸️ Segment Break';
+                    phaseColor = '#9b59b6';
+                    document.getElementById('timerMain').classList.remove('pulsing');
+                    break;
+            }
+            
+            const phaseEl = document.getElementById('timerPhase');
+            phaseEl.textContent = phaseText;
+            phaseEl.style.color = phaseColor;
+            
+            // Update progress bar
+            const currentSeg = w.segments[t.segment];
+            let maxTime = 0;
+            
+            switch(t.phase) {
+                case 'work':
+                    maxTime = currentSeg.workTime;
+                    break;
+                case 'rest':
+                    maxTime = currentSeg.restTime;
+                    break;
+                case 'seriesBreak':
+                    maxTime = currentSeg.seriesBreak;
+                    break;
+                case 'segmentBreak':
+                    maxTime = currentSeg.segmentBreak;
+                    break;
+            }
+            
+            const progress = maxTime > 0 ? ((maxTime - t.currentTime) / maxTime) * 100 : 0;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+        }
+        
+        function toggleTimer() {
+            if (state.timer.running) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+        
+        function startTimer() {
+            state.timer.running = true;
+            document.getElementById('startBtn').textContent = 'Pause';
+            
+            state.timer.interval = setInterval(() => {
+                const t = state.timer;
+                const w = state.currentWorkout;
+                
+                if (t.currentTime > 0) {
+                    t.currentTime--;
+                    t.totalElapsed++;
+                    
+                    // Countdown beeps for last 3 seconds
+                    if (t.currentTime <= 3 && t.currentTime > 0) {
+                        playCountdown();
+                    }
+                    
+                    updateTimerDisplay();
+                } else {
+                    // Move to next phase
+                    moveToNextPhase();
+                }
+            }, 1000);
+        }
+        
+        function pauseTimer() {
+            state.timer.running = false;
+            document.getElementById('startBtn').textContent = 'Resume';
+            clearInterval(state.timer.interval);
+        }
+        
+        function resetTimer() {
+            clearInterval(state.timer.interval);
+            state.timer = {
+                running: false,
+                currentTime: 0,
+                totalElapsed: 0,
+                segment: 0,
+                series: 0,
+                rep: 0,
+                phase: 'work',
+                interval: null
+            };
+            
+            if (state.currentWorkout) {
+                state.timer.currentTime = state.currentWorkout.segments[0].workTime;
+                updateTimerDisplay();
+            }
+            
+            document.getElementById('startBtn').textContent = 'Start';
+            document.getElementById('timerPhase').textContent = 'Get Ready!';
+        }
+        
+        function moveToNextPhase() {
+            const t = state.timer;
+            const w = state.currentWorkout;
+            const currentSeg = w.segments[t.segment];
+            
+            playPhaseChange();
+            
+            // Determine next phase
+            if (t.phase === 'work') {
+                if (currentSeg.restTime > 0) {
+                    t.phase = 'rest';
+                    t.currentTime = currentSeg.restTime;
+                } else {
+                    moveToNextRep();
+                    return;
+                }
+            } else if (t.phase === 'rest') {
+                moveToNextRep();
+                return;
+            } else if (t.phase === 'seriesBreak') {
+                t.series++;
+                t.rep = 0;
+                t.phase = 'work';
+                t.currentTime = currentSeg.workTime;
+            } else if (t.phase === 'segmentBreak') {
+                t.segment++;
+                t.series = 0;
+                t.rep = 0;
+                t.phase = 'work';
+                t.currentTime = w.segments[t.segment].workTime;
+            }
+            
+            updateTimerDisplay();
+        }
+        
+        function moveToNextRep() {
+            const t = state.timer;
+            const w = state.currentWorkout;
+            const currentSeg = w.segments[t.segment];
+            
+            t.rep++;
+            
+            if (t.rep >= currentSeg.reps) {
+                // Move to next series or segment
+                if (t.series < currentSeg.series - 1) {
+                    // Series break
+                    if (currentSeg.seriesBreak > 0) {
+                        t.phase = 'seriesBreak';
+                        t.currentTime = currentSeg.seriesBreak;
+                    } else {
+                        t.series++;
+                        t.rep = 0;
+                        t.phase = 'work';
+                        t.currentTime = currentSeg.workTime;
+                    }
+                } else if (t.segment < w.segments.length - 1) {
+                    // Segment break
+                    if (currentSeg.segmentBreak > 0) {
+                        t.phase = 'segmentBreak';
+                        t.currentTime = currentSeg.segmentBreak;
+                    } else {
+                        t.segment++;
+                        t.series = 0;
+                        t.rep = 0;
+                        t.phase = 'work';
+                        t.currentTime = w.segments[t.segment].workTime;
+                    }
+                } else {
+                    // Workout complete!
+                    completeWorkout();
+                    return;
+                }
+            } else {
+                // Next repetition
+                t.phase = 'work';
+                t.currentTime = currentSeg.workTime;
+            }
+            
+            updateTimerDisplay();
+        }
+        
+        function completeWorkout() {
+            pauseTimer();
+            playComplete();
+            document.getElementById('timerPhase').textContent = '🎉 Complete!';
+            document.getElementById('startBtn').textContent = 'Restart';
+            document.getElementById('timerMain').classList.remove('pulsing');
+            
+            setTimeout(() => {
+                if (confirm('Workout complete! Great job! 💪\n\nWould you like to do another workout?')) {
+                    showMenuView();
+                } else {
+                    resetTimer();
+                }
+            }, 1000);
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', init);
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:text/javascript,' + encodeURIComponent(`
+                    self.addEventListener('install', e => {
+                        self.skipWaiting();
+                    });
+                    self.addEventListener('activate', e => {
+                        e.waitUntil(clients.claim());
+                    });
+                    self.addEventListener('fetch', e => {
+                        e.respondWith(fetch(e.request));
+                    });
+                `)).catch(() => {
+                    // Service worker registration failed, app will still work
+                });
+            });
+        }
+    </script>
+</body>
+</html>
